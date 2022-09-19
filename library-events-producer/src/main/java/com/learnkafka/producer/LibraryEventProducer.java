@@ -1,8 +1,11 @@
 package com.learnkafka.producer;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -91,7 +94,8 @@ public class LibraryEventProducer {
 	}
 
 	private ProducerRecord<Integer,String> buildProducerRecord(String libraryEventTopic, Integer key, String value) {
-		return new ProducerRecord<Integer, String>(libraryEventTopic, null, key, value, null);
+		List<Header> headers = List.of(new RecordHeader("event-source", "scanner".getBytes()));
+		return new ProducerRecord<Integer, String>(libraryEventTopic, null, key, value, headers);
 	}
 
 	public void handleSuccess(Integer key, String value, SendResult<Integer, String> result) {
