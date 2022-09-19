@@ -37,6 +37,12 @@ public class LibraryEventsController {
 		log.info("after saveLibraryEventSynchronous call");
 		return ResponseEntity.status(HttpStatus.CREATED).body(libraryEvent);
 	}
+	
+	@PostMapping(value = "/saveLibraryEventApproach2")
+	public ResponseEntity<LibraryEvent> saveLibraryEventApproach2(@RequestBody LibraryEvent libraryEvent) {
+		producer.sendLibraryEventApproach2(libraryEvent);
+		return ResponseEntity.status(HttpStatus.CREATED).body(libraryEvent);
+	}
 
 	@PutMapping(value = "/updateLibraryEvent")
 	public ResponseEntity<LibraryEvent> updateLibraryEvent(@RequestBody LibraryEvent libraryEvent) {

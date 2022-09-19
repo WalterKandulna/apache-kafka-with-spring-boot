@@ -2,6 +2,7 @@ package com.learnkafka.producer;
 
 import java.util.concurrent.TimeUnit;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -20,6 +21,8 @@ public class LibraryEventProducer {
 	private ObjectMapper mapper;
 	@Autowired
 	private KafkaTemplate<Integer, String> kafkaTemplate;
+	
+	private static final String LIBRARY_EVENT_TOPIC = "library-events";
 	
 	public void sendLibraryEvent(LibraryEvent libraryEvent) {
 		try {
@@ -60,6 +63,35 @@ public class LibraryEventProducer {
 			log.error("exception while sending data to kafka | exception: {}", e.getMessage());
 		}
 		return sendResult;
+	}
+	
+	public void sendLibraryEventApproach2(LibraryEvent libraryEvent) {
+		try {
+			Integer key = libraryEvent.getLibraryEventId();
+			String value = mapper.writeValueAsString(libraryEvent.getBook());
+			ProducerRecord<Integer, String> producerRecord = buildProducerRecord(LIBRARY_EVENT_TOPIC, key, value);
+			ListenableFuture<SendResult<Integer, String>> listenableFuture = kafkaTemplate.send(producerRecord);
+			
+			listenableFuture.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
+
+				@Override
+				public void onSuccess(SendResult<Integer, String> result) {
+					handleSuccess(key, value, result);
+				}
+
+				@Override
+				public void onFailure(Throwable ex) {
+					handleFailure(key, value, ex);
+				}
+			});
+		} 
+		catch (Exception e) {
+			log.error("exception while sending data to kafka | exception: {}", e.getMessage());
+		}
+	}
+
+	private ProducerRecord<Integer,String> buildProducerRecord(String libraryEventTopic, Integer key, String value) {
+		return new ProducerRecord<Integer, String>(libraryEventTopic, null, key, value, null);
 	}
 
 	public void handleSuccess(Integer key, String value, SendResult<Integer, String> result) {
