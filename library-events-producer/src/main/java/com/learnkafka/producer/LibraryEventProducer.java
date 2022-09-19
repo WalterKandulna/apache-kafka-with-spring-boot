@@ -1,5 +1,7 @@
 package com.learnkafka.producer;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -38,9 +40,26 @@ public class LibraryEventProducer {
 				}
 			});
 		} 
-		catch (JsonProcessingException e) {
+		catch (Exception e) {
 			log.error("exception while sending data to kafka | exception: {}", e.getMessage());
 		}
+	}
+	
+	public SendResult<Integer, String> sendLibraryEventSynchronous(LibraryEvent libraryEvent) {
+		SendResult<Integer, String> sendResult = null;
+		try {
+			Integer key = libraryEvent.getLibraryEventId();
+			String value = mapper.writeValueAsString(libraryEvent.getBook());
+			//because of get it waits until it is resolved, synchronous
+			log.info("before calling send() method");
+			sendResult = kafkaTemplate.sendDefault(key, value).get(1, TimeUnit.SECONDS);
+			log.info("after calling send() method");
+		} 
+		
+		catch (Exception e) {
+			log.error("exception while sending data to kafka | exception: {}", e.getMessage());
+		}
+		return sendResult;
 	}
 
 	public void handleSuccess(Integer key, String value, SendResult<Integer, String> result) {
